@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect } from "react";
 import { TodoDto } from "@/app/models/TodoDto";
 import TodoItem from "./TodoItem";
