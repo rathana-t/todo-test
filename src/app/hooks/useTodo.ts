@@ -13,6 +13,8 @@ import {
   RealtimePostgresChangesPayload,
 } from "@supabase/supabase-js";
 
+const todoListOriginalKey = "todoListOriginal";
+
 export function useTodo() {
   const [todoList, setTodoList] = useState<TodoDto[]>([]);
   const [search, setSearch] = useState<string>("");
@@ -30,8 +32,13 @@ export function useTodo() {
     }
 
     if (data) {
+      setOriginalTodoList(data);
       setTodoList(data);
     }
+  };
+
+  const setOriginalTodoList = (data: TodoDto[]) => {
+    localStorage.setItem(todoListOriginalKey, JSON.stringify(data));
   };
 
   const subscribeToTodo = () => {
@@ -55,6 +62,7 @@ export function useTodo() {
     switch (eventType) {
       case REALTIME_POSTGRES_CHANGES_LISTEN_EVENT.INSERT:
         setTodoList([newData, ...todoList]);
+        setOriginalTodoList([newData, ...todoList]);
         break;
       case REALTIME_POSTGRES_CHANGES_LISTEN_EVENT.UPDATE:
         updateTodoList(newData);
@@ -85,7 +93,6 @@ export function useTodo() {
   };
 
   const handleMarkAsComplete = async (todo: TodoDto) => {
-    const isCompleted = todo.isCompleted;
     if (todo.isCompleted) {
       return;
     }
@@ -105,6 +112,7 @@ export function useTodo() {
   const removeTodo = (id: string) => {
     const updatedTodoList = todoList.filter((item) => item.id !== id);
     setTodoList(updatedTodoList);
+    setOriginalTodoList(updatedTodoList);
   };
 
   const handleUpdateToDo = async () => {
@@ -132,6 +140,7 @@ export function useTodo() {
     });
 
     setTodoList(updatedTodoList);
+    setOriginalTodoList(updatedTodoList);
   };
 
   const handleDelete = async (todo: TodoDto) => {
@@ -159,7 +168,11 @@ export function useTodo() {
       return;
     }
 
-    const filteredTodo = todoList.filter((todo) =>
+    const originalTodoList = JSON.parse(
+      localStorage.getItem(todoListOriginalKey) || "[]"
+    ) as TodoDto[];
+
+    const filteredTodo = originalTodoList.filter((todo) =>
       containIgnoreCase(todo.todo, search)
     );
     setTodoList(filteredTodo);
